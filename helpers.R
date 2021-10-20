@@ -1,7 +1,20 @@
-if(system.file(package="learnr") == ''){
-  utils::install.packages("learnr", repos = "https://cloud.r-project.org/")
-}
+tryCatch({
+  if(system.file(package="remotes") == ''){
+    utils::install.packages("remotes", repos = "https://cloud.r-project.org/")
+  }
+  if(system.file(package="learnr") == ''){
+    remotes::install_cran("learnr", repos = "https://cloud.r-project.org/", upgrade = "never", build = FALSE)
 
+  }
+
+  if(system.file(package="git2r") == ''){
+    remotes::install_cran("git2r", repos = "https://cloud.r-project.org/", upgrade = "never", build = FALSE)
+  }
+
+}, error = function(e){
+  stop("Please make sure packages `remotes`, `learnr`, `git2r` have been installed. Run \n  ",
+       "install.packages(c('remotes', 'learnr', 'git2r'))", call. = FALSE)
+})
 
 tutorial_path <- function(check = FALSE){
   path <- file.path(tempdir(), "..", "dipterix-tutorial")
