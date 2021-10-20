@@ -1,0 +1,338 @@
+---
+title: "How to Write an R Package - 101"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+
+## Objectives
+
+This tutorial is designed for `R` learners to use existing toolboxes to create `R` packages that almost meet the `CRAN` standard. 
+
+### What does and what doesn't
+
+This tutorial is meant to be short, straightforward and easy to follow, not to be complete. A complete guidance should be "[Write R Extension](https://cran.r-project.org/doc/manuals/R-exts.html)". Always stick to that documentation as the standard may change over time.
+
+### Why CRAN?
+
+* **Convenient**: `CRAN` is the official repository for `R` packages. All `CRAN` packages can be installed via `install.packages`. `CRAN` will also compile your code to binary formats on major platforms, so that fewer system libraries are needed when installing those compiled versions
+* **Code quality**: all the packages submitted to `CRAN` must be manually inspected to make sure the code quality has met certain standard and there should be no violations defined in [CRAN Repository Policy](https://mirror.las.iastate.edu/CRAN/web/packages/policies.html)
+
+Even if you don't plan to submit packages to CRAN, it is still highly recommended to write code in good quality. This will help you maintain your package in the long run.
+
+## Prerequisite
+
+This tutorial requires `RStudio`. The following R packages must be installed: `usethis`, `roxygen2`, `testthat`, `spelling`, `goodpractice`, `devtools`. Please install these packages first via
+
+```{r, eval = FALSE}
+install.packages(c("usethis", "roxygen2", "testthat", "spelling", "goodpractice", "devtools"))
+```
+
+## Create Your First Package
+
+Open `RStudio`, type and run in `console` panel:
+
+```{r}
+usethis::create_package("~/myfirstpackage")
+```
+
+A new project folder `myfirstpackage` will be created at your home directory. `myfirstpackage` is also the package name. You can change the path and/or package name accordingly. 
+
+When the package is created for the first time, `RStudio` will open a new project session. This session is dedicated for the package and default working directory will be the root of your package. You can see the project name on the top-right corner. 
+
+To switch among different projects, you can use the top-right corner project dropdown menu, or simply go to the navigation bar, choose `File > Open Project`, navigate to your project folder and double-click on the folder.
+
+### Package name
+
+The `R` package name should start with letters, and followed by letters, digits, or `.`. Leading digits or `.` are disallowed. For example:
+
+* `abc123` or `abc.def.123` are valid R package names
+* `.abc` is invalid
+* `1abc` is invalid
+
+It is best to always check whether your package name to see if another package shares the same name with you on `CRAN` or `BioConductor` (another R package repository) to make sure there is no conflict. Since `R` is meant to be portable and cross-platform. Some platforms are case-insensitive, hence package `abc` and `aBC` conflict with each other. 
+
+### Package file structure
+
+In the `myfirstpackage` folder, the following files/directories will be created:
+
+* `DESCRIPTION`, `NAMESPACE`, `R`: these files/folders are necessary for the package to build
+  - `DESCRIPTION` mainly provides information about what objective should be achieved by your package, who write the package, what license to be used, and what **other R packages your code depends on**
+  - `NAMESPACE` defines what functions to be exported and imported
+  - `R` a folder containing all the package functions
+* `.Rbuildignore`: this file specifies which files/directories should be ignored and excluded from the package
+* `.gitignore`, `myfirstpackage.Rproj`: other files used by `git` or `RStudio`; they will be ignored when building the R packages
+
+There will be other files/folder as this tutorial goes on; see more details at Section 1.1 in "Write R Extension".
+
+## Setup your first package
+
+After creating the package, some steps are necessary before you start to write any functions into the `R` folder. 
+
+1. Go to navigation bar `Tools > Project Options > Build Tools`, check `Use devtools package functions if available` and `Generate documentation with Roxygen`. Enter the following line into `Check Package -- R CMD check additional options:`
+
+```
+--run-donttest --as-cran
+```
+
+Then click `Configure` button, make sure everything is checked. Save the changes.
+
+This step makes sure you are using `devtools` to check the package that uses `CRAN` standard. And every time when you recompile/test the package, the documentation will be updated automatically.
+
+
+2. Type the following R code and run in RStudio console
+
+```{r}
+usethis::use_namespace()
+```
+
+Please choose to overwrite if any question is prompted.
+
+This will let `roxygen2` to manage the variables to import and export automatically.
+
+3. Type and run R command to add license. For example, this command adds `MIT` license. You can browse `?usethis::use_mit_license` for other choices.
+
+```{r}
+usethis::use_mit_license()
+```
+
+If you are using `MIT` or `Apache` license, open `LICENSE` file with your text editor, substitute with your name in copyright holder
+
+4. Go to `DESCRIPTION` file, remove line `LazyData: true` if exists, add `BugReports`, `URL`, `Language` so that users know what's the language used, where to report bugs and where to browse the package's website. Make sure **every** other entries are also filled out correctly. Here's an example of mine.
+
+```
+Package: myfirstpackage
+Title: A Tutorial About How to Write an R Package
+Version: 0.0.1
+Authors@R: 
+    c(
+    person("Zhengjia", "Wang", , "zhengjia.wang@pennmedicine.upenn.edu", 
+    role = c("aut", "cre"))
+    )
+Description: A fake package teaching our lab members on how to write R packages
+    that meet the 'CRAN' standard.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Language: en-US
+URL: https://github.com/dipterix/myfirstpackage
+BugReports: https://github.com/dipterix/myfirstpackage/issues
+
+```
+
+* `Title` must be title case
+* `Version` should be `major.minor.patch` style (in my case, `major-version=0`, `minor-version=0`, and `patch-version=1`). Sometimes you will see `major.minor.patch.dev` style (such as `0.0.0.9000`). This is mainly for development purpose. I will cover the reason later. The basic rule is if you want your package to be accepted by `CRAN`, `dev` version should always be removed.
+* `Description` must be valid sentences. All acronyms should be quoted with single `' '`. This quotation rule also applies to other documentations
+* `Authors@R:` is an R expression of author list. Sometimes you will see combinations of `Author: ` and `Maintainer: ` entries on other packages, which is also valid. However, I would recommend sticking to `Authors@R:`
+
+5. Type and run the following R code in RStudio console to add `README` file and a package documentation file
+
+```{r}
+usethis::use_readme_md()
+usethis::use_package_doc()
+```
+
+
+`usethis::use_readme_md()` is mainly used if you publish your package on Github or Gitlab. The `README.md` will be your front page. This is optional but highly recommended
+
+`usethis::use_package_doc()` creates a file `NAME-package.R` in the `R/` folder, where `NAME` is your package name. Please remove the first two lines.
+
+
+6. Finally, use `git` to stage your changes. `git` is a version-control tool that allows you to track, edit, reverse changes without copying/backup the project elsewhere.
+
+```{r}
+usethis::use_git()
+```
+
+## Write your first function
+
+Create `aaa.R` within `R` folder, copy-paste the following code into the newly created file
+
+```{r}
+#' @export
+hello_world <- function(name = "pen"){
+  print(sprintf("Hello World, I have one %s!", name))
+}
+
+hidden_message <- function(){
+  print("You cannot see me")
+}
+
+```
+
+Compile the package (use `command/ctrl + shift + B`), you will see
+
+```
+==> devtools::document(roclets = c('rd', 'collate', 'namespace', 'vignette'))
+
+ℹ Updating myfirstpackage documentation
+ℹ Loading myfirstpackage
+Writing NAMESPACE
+Writing NAMESPACE
+Documentation completed
+
+==> R CMD INSTALL --no-multiarch --with-keep.source myfirstpackage
+...
+```
+
+Now type `hello_world()` in your R console, you should be able to get the following result:
+
+```
+> hello_world(name = "apple")
+[1] "Hello World, I have one apple!"
+```
+
+However, if you try to call `hidden_message()`, you will get the following error:
+
+```
+> hidden_message()
+Error in hidden_message() : could not find function "hidden_message"
+```
+
+### What happened here
+
+When you compile the package, `roxygen2` will check each file at `R/` folder, locate functions marked with `#' @export` keyword, and write them into `NAMESPACE` file.
+
+If you open `NAMESPACE` file, you will see the following line being added:
+
+```
+export(hello_world)
+```
+
+When package is loaded via `library()` function, only exported functions/methods will be visible to users, while non-exported functions are treated as "internals" that the package maintainer wants to hide.
+
+There are many reasons why a function could be internal. For example, the main reason I hide a function is because they are subject to change. When there are too many functions within R packages, you don't want to export all of them. Instead, you might simply want to export the "key" functions that serves the main purpose.
+
+### ALWAYS document your exported functions
+
+`CRAN` requires that every exported functions MUST be correctly documented. The documentation helps users understand the use-case of your functions. For example, you can use `?apply` or `help("apply")` to query the use-case of function `apply`. If your function is documented, they can also be queried via the same method.
+
+If an exported function has no documentation, then `CRAN` will reject your package. Also checking your package will also result in warnings:
+
+```
+> checking for missing documentation entries ... WARNING
+  Undocumented code objects:
+    ‘hello_world’
+  All user-level objects in a package should have documentation entries.
+  See chapter ‘Writing R documentation files’ in the ‘Writing R
+  Extensions’ manual.
+```
+
+To document your functions, `roxygen2` provides an extremely simple approach. The following script documents the function `hello_word`. Go to your `aaa.R` in the `R/` folder, change accordingly.
+
+```{r}
+#' @title Hello World to 'myfirstpackage' Users
+#' @description Displays "Hello world, I have one name", where \code{name}
+#' can be replaced.
+#' @param name character, will replace \code{name} in the displayed text
+#' @details The details are highly encouraged, but not mandatory
+#' @return Returns the printed message
+#' @examples
+#'
+#' hello_world("apple")
+#' hello_world("pen")
+#' hello_world("penpal apple apple pen")
+#'
+#' @export
+hello_world <- function(name = "pen"){
+  print(sprintf("Hello World, I have one %s!", name))
+}
+
+```
+
+Now rebuild the package (`command/ctrl+shift+B`), type `?hello_world`. You can see the newly added documentation.
+
+### What happened
+
+Because you have set in project options to let `roxygen2` take over documentations, when compiling the package, `roxygen2` will scan the scripts in `R/` folder, parse the documents, and generate latex-like `Rd` files in the `man/` folder. For example in this case, `hello_world.Rd` will be generated. These generated files will be used to render the help page.
+
+### What makes a documentation
+
+The documentation starts with `#'`. A complete documentation should
+
+* have a valid `@title`
+* all arguments MUST be documented by `@param` via `@param argumentName`
+* `@return` the value(s) to be returned. Even if your function returns nothing, you must state so (this is not hard requirement, but CRAN people will ask you to do so)
+* `@examples` is optional but CRAN will ask you to provide if possible (so add example whenever possible)
+* `@description` should be a short sentence explaining what the function does. If missing, then the description will be the same as title
+* `@details` is the place for implementation details, notice, use-case, motivation, etc. It's not mandatory but highly recommended if you want your users to understand the function better.
+
+### What makes a good documentation
+
+Documenting a function is necessary but might not be enough. You can still be rejected by CRAN!
+
+Here are some practices when writing good documentations. 
+
+0. Be clear and precise
+1. Always check your package: (go to panel `Build`, press the `Check` button). No error/warning/note should appear
+2. Always run `spelling::spell_check_package()` to make sure there are no spelling mistakes (please run `command/ctrl+D` to re-generate documentation files before checking spellings)
+3. Acronyms should be quoted with single quotation mark `'`
+4. Code should be wrapped with `\code{}`
+5. Always add `@return`, `@examples` if possible
+
+## Check your package
+
+To check your package, go to `Build` panel, click on `Check` button. If you finish all the steps in this document, you should get the following result
+
+```
+── R CMD check results ────────────────────────── myfirstpackage 0.0.0.9000 ────
+Duration: 6.9s
+
+0 errors ✓ | 0 warnings ✓ | 0 notes ✓
+
+R CMD check succeeded
+```
+
+CRAN requests all packages to have zero errors/warnings. If your package have errors/warnings, your package will be rejected almost with no exception. For packages with notes only (`New Submission` note will be OK), CRAN will ask you to explain or to fix all other notes. My personal experience is that they treat most notes the same as warnings, so fix all the notes except for `New Submission` one before the package is sent to CRAN. I didn't know this when writing my first package. It took me one month to finally get that package on CRAN. However, don't be discouraged by my story. Treat it as an approach to improve your code quality. The first submission will always be hard. Once you know their standards, the following ones will be much easier. 
+
+### Additional checks
+
+`goodpractice` provides additional checks to make sure your code quality meets the standard. Some of these are required by CRAN (some are not). I personally use the following command. Please fix as much as possible to reduce the chance being asked to revise.
+
+```{r}
+goodpractice::gp(checks = goodpractice::all_checks()[-c(1,2,8,12)])
+```
+
+
+## Conclusion
+
+This tutorial helps you set up an R package with the following features
+
+* you don't have to worry about writing latex R documentation anymore
+* not need to manually export functions
+* set up good habits when writing a package before you realize it's too late
+
+### What's next
+
+The next tutorial will start a real R project. You will learn:
+
+* how to properly import functions from other packages
+* how to write detailed and instructive documentation
+* how to use `*apply` functions to replace `for` loops
+* how to use pipes `%>%`, `|>`
+* how to use dots `...` in R functions
+* what's environment
+
+
+## Exercise 
+
+Create a package `aims` without refering to this tutorial (you can read this tutorial before starting this assignment, but once you start, don't refer to this tutorial).
+
+```{r quiz, eval=TRUE,echo=FALSE}
+quiz(
+  question("You can use the following checklist to keep track of the progress",
+    answer("Create a package called `aims`", correct = TRUE),
+    answer("Set up configurations in RStudio to use `roxygen2` and `devtools`", correct = TRUE),
+    answer("Set up descriptive files", correct = TRUE),
+    answer("Write your first function, document it", correct = TRUE),
+    answer("Check your package, make sure no errors/warnings/notes", correct = TRUE)
+  )
+)
+```
+

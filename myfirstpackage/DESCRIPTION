@@ -1,0 +1,17 @@
+Package: myfirstpackage
+Title: A Tutorial About How to Write an R Package
+Version: 0.0.0.9000
+Authors@R: 
+    c(
+    person("Zhengjia", "Wang", , "zhengjia.wang@pennmedicine.upenn.edu", 
+    role = c("aut", "cre"))
+    )
+Description: A fake package teaching our lab members on how to write R packages
+    that meet the 'CRAN' standard.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Language: en-US
+URL: https://github.com/dipterix/myfirstpackage
+BugReports: https://github.com/dipterix/myfirstpackage/issues
